@@ -1,0 +1,1 @@
+certoraRun $1.sol:Borda --verify Borda:Borda.spec --cache $RANDOM
