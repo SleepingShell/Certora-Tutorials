@@ -28,3 +28,5 @@ certora_*
 
 # mac
 .DS_Store
+
+.env
