@@ -26,8 +26,8 @@ rule totalSupplyAfterMint(address account, uint256 amount) {
 	
 	// Additional variables to aid in understanding violation:
 	
-	// uint256 userBalanceBefore = balanceOf(account);
-	// uint256 totalBefore = totalSupply();
+	uint256 userBalanceBefore = balanceOf(account);
+	uint256 totalBefore = totalSupply();
 	
 	mint(e, account, amount);
 	

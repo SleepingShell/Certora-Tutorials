@@ -25,6 +25,7 @@ cache/
 .certora*
 .last_confs
 certora_*
+.zip-output*
 
 # mac
 .DS_Store
