@@ -1,0 +1,16 @@
+(declare-const g Int)
+(declare-const y Int)
+(declare-const r Int)
+
+(assert (= (+ g g) 10) )
+(assert (= (+ (* g y) y) 12) )
+(assert (= (- (* g y) (* r g)) g) )
+(check-sat)
+(get-model)
+
+(push)
+(declare-const p Bool)
+(declare-const q Bool)
+(assert (= (and p q) p) )
+(assert (=> p q) )
+(check-sat)
