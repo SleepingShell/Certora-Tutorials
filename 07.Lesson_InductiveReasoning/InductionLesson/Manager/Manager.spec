@@ -13,10 +13,20 @@ rule uniqueManagerAsRule(uint256 fundId1, uint256 fundId2, method f) {
 	require getCurrentManager(fundId1) != getCurrentManager(fundId2);
 	
 	// hint: add additional variables just to look at the current state
-	// bool active1 = isActiveManage(getCurrentManager(fundId1));			
+	// bool active1 = isActiveManage(getCurrentManager(fundId1));
+
+	require getCurrentManager(fundId1) != 0 => isActiveManager(getCurrentManager(fundId1));
+	require getCurrentManager(fundId2) != 0 => isActiveManager(getCurrentManager(fundId2));
 	
 	env e;
 	calldataarg args;
+
+	if (f.selector == claimManagement(uint256).selector || 
+			f.selector == createFund(uint256).selector || 
+			f.selector == setPendingManager(uint256, address).selector) 
+	{
+		require !isActiveManager(e.msg.sender);
+	}
 	f(e,args);
 	
 	// verify that the managers are still different 
