@@ -41,9 +41,17 @@ invariant step4_uniqueManagerAsInvariant(uint256 fundId1, uint256 fundId2)
 
 rule uniqueManagerAsRule(uint256 fundId1, uint256 fundId2, method f) {
 	require fundId1 != fundId2;
-    require getCurrentManager(fundId1) != 0 => isActiveManager(getCurrentManager(fundId1));
+	
+  require getCurrentManager(fundId1) != 0 => isActiveManager(getCurrentManager(fundId1));
 	require getCurrentManager(fundId2) != 0 => isActiveManager(getCurrentManager(fundId2));
 	require getCurrentManager(fundId1) != getCurrentManager(fundId2) ;
+	
+	requireInvariant ManagerZeroIsNotActive();
+	requireInvariant step0_uniqueManagerAsInvariant(fundId1, fundId2);
+	requireInvariant step1_uniqueManagerAsInvariant(fundId1, fundId2);
+	requireInvariant step2_activeCurrentManger(fundId1);
+	requireInvariant step2_activeCurrentManger(fundId2);
+	requireInvariant step4_uniqueManagerAsInvariant(fundId1, fundId2);
 				
 	env e;
 	if (f.selector == claimManagement(uint256).selector)
