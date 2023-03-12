@@ -7,8 +7,8 @@ methods {
 }
 
 invariant listEntriesEqual(uint256 index, address token)
-  (index != 0 && token != 0 => (getTokenAtIndex(index) == token <=> getIdOfToken(token) == index) &&
-   index == 0 && token != 0 => (getTokenAtIndex(index) == token => getIdOfToken(token) == index))
+  (index != 0 && token != 0 => (getTokenAtIndex(index) == token <=> getIdOfToken(token) == index)) &&
+   (index == 0 && token != 0 => (getTokenAtIndex(index) == token => getIdOfToken(token) == index))
   {
     preserved
     {
