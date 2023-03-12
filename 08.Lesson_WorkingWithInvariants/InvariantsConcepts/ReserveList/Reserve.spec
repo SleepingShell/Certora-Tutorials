@@ -45,9 +45,11 @@ rule tokenRemovalIndependence(address token, address other) {
 
   uint256 otherIdBefore = getIdOfToken(other);
   require otherIdBefore != 0;
+  //require getTokenAtIndex(other) == otherIdBefore;
 
   requireInvariant tokensHaveDistinctIds(token, other);
   requireInvariant listEntriesEqual(otherIdBefore, other);
+  //requireInvariant listEntriesEqual(getIdOfToken(token), token);
 
   removeReserve(token);
 

@@ -67,8 +67,7 @@ methods {
 rule integrityOfEndTime(env e) {
     end(e);
 
-    assert e.block.timestamp >= endAt(), "ended before endAt"; 
-             
+    assert e.block.timestamp >= endAt(), "ended before endAt";              
 }
 
 
@@ -87,8 +86,6 @@ rule impossibleToEndEarlier(env e, method f) {
 
     assert lastReverted, "ended before endAt";
 }
-
-
 
 /****************************** 
 *       Variable Transition   *
@@ -149,6 +146,33 @@ rule same(method f) {
     assert ended(); 
 }
 
+// In order to sell an NFT, the owner must own it
+//invariant sellerMustOwnNFT(method f, address owner)
+    
+
+// Can only start if not started or ended
+rule onlyStartOnce(env e) {
+    /*
+    require e.msg.sender == seller();
+    require e.msg.value == 0;
+    require NFT.ownerOf(nftId()) == e.msg.sender;
+
+    bool alreadyStarted = started();
+    start@withrevert(e);
+    
+    assert lastReverted => alreadyStarted || ended();
+    */
+
+    start(e);
+    calldataarg args;
+    method f;
+    f(e, args);
+
+    start@withrevert(e);
+    assert lastReverted;
+}
+
+
 /****************************** 
 *        Valid State          *
 ******************************/
@@ -185,13 +209,27 @@ invariant integrityOfHighestBidStep3(address other)
         }
     }
 
+// If we are in the started state, then some properties must hold
+invariant startedStateIsValid()
+    started() && !ended() => endAt() != 0 && NFT.ownerOf(nftId()) == currentContract
 
 
 /****************************** 
 *       High Level            *
 ******************************/
 
+//The contract should have enough balance to satisfy all withdraws and transfer to seller
+invariant sumOfBudsLETokenBalance()
+    !ended() => sumBids <= Token.balanceOf(currentContract)
+    {
+        preserved bidFor(address bidder, uint amount) with (env e) {
+            require bidder != 0 && e.msg.sender != currentContract; 
+        }
 
+        preserved bid(uint amount) with (env e) {
+            require e.msg.sender != 0 && e.msg.sender != currentContract; 
+        }
+    }
 
 /****************************** 
 *       Risk Assessment       *
