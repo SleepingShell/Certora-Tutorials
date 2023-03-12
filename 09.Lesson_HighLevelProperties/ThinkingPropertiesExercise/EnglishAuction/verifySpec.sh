@@ -4,4 +4,5 @@ certoraRun  EnglishAuction.sol dependencies/DummyERC20A.sol dependencies/DummyER
     --link EnglishAuction:nft=DummyERC721A \
     --optimistic_loop \
     --send_only \
-    --msg "EnglishAuction"
+    --msg "EnglishAuction" \
+    $@

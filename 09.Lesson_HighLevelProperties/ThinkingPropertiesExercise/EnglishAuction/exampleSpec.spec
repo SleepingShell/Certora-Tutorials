@@ -30,8 +30,11 @@ methods {
     highestBid() returns (uint256)                                          envfree
     bids(address) returns (uint256)                                         envfree
     operators(address, address) returns (bool)                              envfree
+    token() returns (address)                                               envfree
 
 
+    bid(uint256)                                                            
+    bidFor(address, uint256)                                            
     // erc721
     safeTransferFrom(address, address, uint256)                             => DISPATCHER(true)
     NFT.balanceOf(address) returns (uint256)                                envfree
@@ -85,6 +88,62 @@ rule impossibleToEndEarlier(env e, method f) {
     end@withrevert(e);
 
     assert lastReverted, "ended before endAt";
+}
+
+rule everyButHighestBidderCanWithdraw(env e1, env e2) {
+    require e1.msg.value == 0 && e2.msg.value == 0;
+    require e1.msg.sender != e2.msg.sender;
+    require e1.msg.sender == highestBidder();
+    require bids(e2.msg.sender) > 0;
+
+    // This is required bc Certora will set e2 to 0x0 and have prior balance that will overflow
+    require e2.msg.sender != 0;
+    require Token.balanceOf(e2.msg.sender) == 0;
+    requireInvariant highestBidVSBids(e1.msg.sender);
+    requireInvariant integrityOfHighestBidStep3(e2.msg.sender);
+
+    uint256 bid1 = bids(e1.msg.sender);
+    uint256 bid2 = bids(e2.msg.sender);
+    require Token.balanceOf(currentContract) >= bid1 + bid2;
+
+    withdraw@withrevert(e1);
+    assert lastReverted;
+
+    withdraw@withrevert(e2);
+    assert !lastReverted;
+}
+
+rule cantBidAfterTime(env e, method f) filtered {
+    f -> f.selector == bid(uint256).selector || f.selector == bidFor(address,uint256).selector
+} {
+    require started();
+    require e.block.timestamp > endAt();
+
+    calldataarg args;
+    f@withrevert(e, args);
+
+    assert lastReverted;
+}
+
+// An operator can only withdraw if they are approved
+rule operatorIsChecked(env e1, env e2, uint256 amount) {
+    require e1.msg.sender != e2.msg.sender;
+    require Token.balanceOf(e1.msg.sender) >= amount;
+    require Token.balanceOf(e2.msg.sender) >= amount + 1;
+    require highestBid() < amount;
+    require operators(e1.msg.sender, e2.msg.sender) == false;
+    require e1.msg.value == 0 && e2.msg.value == 0;
+
+    bid(e1, amount);
+    bid(e2, amount + 1);
+    requireInvariant integrityOfHighestBidStep3(e1.msg.sender);
+
+    withdrawFor@withrevert(e2, e1.msg.sender, amount);
+    assert lastReverted;
+
+    setOperator(e1, e2.msg.sender, true);
+    withdrawFor@withrevert(e2, e1.msg.sender, amount);
+    assert !lastReverted;
 }
 
 /****************************** 
@@ -145,10 +204,6 @@ rule same(method f) {
     f(e,args);
     assert ended(); 
 }
-
-// In order to sell an NFT, the owner must own it
-//invariant sellerMustOwnNFT(method f, address owner)
-    
 
 // Can only start if not started or ended
 rule onlyStartOnce(env e) {
@@ -213,6 +268,13 @@ invariant integrityOfHighestBidStep3(address other)
 invariant startedStateIsValid()
     started() && !ended() => endAt() != 0 && NFT.ownerOf(nftId()) == currentContract
 
+/*
+invariant nftNonZero()
+    nft() != 0
+
+invariant tokenNonZero()
+    token() != 0
+*/
 
 /****************************** 
 *       High Level            *
